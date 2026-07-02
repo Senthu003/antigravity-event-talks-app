@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Pulse - Live Updates</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="bg-gradient-glow"></div>
+    <div class="app-container">
+        <!-- Sidebar Navigation & Filters -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <!-- SVG Database Pulse Logo -->
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                        <path d="M12 12v3"></path>
+                        <path d="M9 15h6"></path>
+                    </svg>
+                </div>
+                <div class="brand-info">
+                    <h1>Release Pulse</h1>
+                    <p>BigQuery Intelligence</p>
+                </div>
+            </div>
+
+            <!-- Stats Dashboard Widget -->
+            <div class="stats-panel">
+                <h3>Pulse Analytics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card" id="stat-total-card">
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Total Updates</span>
+                    </div>
+                    <div class="stat-card border-feature" id="stat-features-card">
+                        <span class="stat-value text-feature" id="stat-features">0</span>
+                        <span class="stat-label">Features</span>
+                    </div>
+                    <div class="stat-card border-change" id="stat-changes-card">
+                        <span class="stat-value text-change" id="stat-changes">0</span>
+                        <span class="stat-label">Changes</span>
+                    </div>
+                    <div class="stat-card border-breaking" id="stat-breaking-card">
+                        <span class="stat-value text-breaking" id="stat-breaking">0</span>
+                        <span class="stat-label">Breaking / Issues</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="controls-panel">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search releases...">
+                </div>
+
+                <div class="filter-section">
+                    <h4>Categories</h4>
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">All Updates</button>
+                        <button class="filter-btn text-feature-hover" data-filter="Feature">
+                            <span class="dot bg-feature"></span>Features
+                        </button>
+                        <button class="filter-btn text-change-hover" data-filter="Change">
+                            <span class="dot bg-change"></span>Changes
+                        </button>
+                        <button class="filter-btn text-announcement-hover" data-filter="Announcement">
+                            <span class="dot bg-announcement"></span>Announcements
+                        </button>
+                        <button class="filter-btn text-breaking-hover" data-filter="Breaking">
+                            <span class="dot bg-breaking"></span>Breaking
+                        </button>
+                        <button class="filter-btn text-issue-hover" data-filter="Issue">
+                            <span class="dot bg-issue"></span>Issues
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Sync Info -->
+            <div class="sidebar-footer">
+                <div class="sync-status">
+                    <span class="pulse-indicator green" id="sync-dot"></span>
+                    <span class="sync-text" id="sync-time">Last Refreshed: Just now</span>
+                </div>
+                <button class="btn btn-refresh" id="refresh-btn">
+                    <svg id="spinner" class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Timeline Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <h2>Google Cloud BigQuery Notes</h2>
+                <p class="subtitle">A visual stream of feature launches, system enhancements, and critical announcements.</p>
+            </header>
+
+            <!-- Loading Spinner State -->
+            <div class="loader-container" id="feed-loader">
+                <div class="custom-spinner"></div>
+                <p>Retrieving release feed from Google Cloud...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-container hidden" id="feed-error">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-breaking">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <h3>Failed to load feed</h3>
+                <p id="error-message">Could not fetch release notes. Check your internet connection.</p>
+                <button class="btn btn-primary" id="retry-btn">Retry Sync</button>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-container hidden" id="feed-empty">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <h3>No updates match your filters</h3>
+                <p>Try searching for something else or clearing the filters.</p>
+            </div>
+
+            <!-- Timeline Stream -->
+            <section class="timeline-container hidden" id="timeline">
+                <div class="timeline-line"></div>
+                <div id="timeline-stream">
+                    <!-- Dynamic Date Blocks and Release Cards go here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Floating Actions Drawer -->
+    <div class="floating-drawer hidden" id="floating-drawer">
+        <div class="drawer-content">
+            <div class="drawer-info">
+                <span class="badge count-badge" id="selected-count">0</span>
+                <span>update(s) selected for Tweeting</span>
+            </div>
+            <div class="drawer-actions">
+                <button class="btn btn-secondary btn-sm" id="clear-selected-btn">Deselect All</button>
+                <button class="btn btn-x" id="tweet-selected-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>Draft Tweet</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tweet Composer Modal -->
+    <div class="modal-overlay hidden" id="tweet-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Draft Tweet</h3>
+                <button class="close-btn" id="close-modal-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <!-- Left Column: Composer -->
+                    <div class="composer-col">
+                        <p class="modal-instruction">Edit your post. We have compiled a summary of the selected release note(s):</p>
+                        <div class="textarea-wrapper">
+                            <textarea id="tweet-textarea" rows="7" placeholder="What is happening?"></textarea>
+                        </div>
+                        <div class="composer-footer">
+                            <div class="progress-container">
+                                <svg class="progress-ring" width="28" height="28">
+                                    <circle class="progress-ring__bg" stroke="rgba(255,255,255,0.08)" stroke-width="2.5" fill="transparent" r="10" cx="14" cy="14"/>
+                                    <circle class="progress-ring__circle" id="progress-ring-circle" stroke="var(--color-primary)" stroke-width="2.5" fill="transparent" r="10" cx="14" cy="14" stroke-dasharray="62.8" stroke-dashoffset="62.8"/>
+                                </svg>
+                                <span id="char-counter" class="char-counter">0 / 280</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: X Live Preview -->
+                    <div class="preview-col">
+                        <span class="preview-label">Live X Preview</span>
+                        <div class="x-preview-card">
+                            <div class="x-author-row">
+                                <div class="x-avatar">
+                                    <!-- Stylized database logo -->
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                                    </svg>
+                                </div>
+                                <div class="x-author-info">
+                                    <div class="x-author-names">
+                                        <span class="x-display-name">BigQuery Release Pulse</span>
+                                        <span class="x-handle">@BigQueryPulse</span>
+                                        <span class="x-dot">·</span>
+                                        <span class="x-time">now</span>
+                                    </div>
+                                    <button class="x-more-btn" disabled>
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                            <path d="M3 12a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm7 0a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm7 0a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="x-tweet-content">
+                                <div id="x-tweet-text" class="x-tweet-text"></div>
+                                
+                                <!-- X Rich Link Preview Card -->
+                                <div id="x-link-card" class="x-link-card">
+                                    <div class="x-card-image" id="x-card-image">
+                                        <svg viewBox="0 0 400 200" width="100%" height="100%" xmlns="http://www.w3.org/2005/svg">
+                                            <defs>
+                                                <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stop-color="#0f172a" />
+                                                    <stop offset="100%" stop-color="#1e293b" />
+                                                </linearGradient>
+                                                <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                    <stop offset="0%" stop-color="#6366f1" />
+                                                    <stop offset="100%" stop-color="#38bdf8" />
+                                                </linearGradient>
+                                            </defs>
+                                            <rect width="100%" height="100%" fill="url(#cardGrad)" />
+                                            <circle cx="200" cy="85" r="45" fill="rgba(99, 102, 241, 0.08)" stroke="url(#accentGrad)" stroke-width="1.5" />
+                                            <path d="M185 75v20M200 70v25M215 78v14M185 85h30" stroke="url(#accentGrad)" stroke-width="2" stroke-linecap="round" />
+                                            <ellipse cx="200" cy="85" rx="20" ry="8" stroke="url(#accentGrad)" stroke-width="1.5" fill="none" />
+                                            <ellipse cx="200" cy="93" rx="20" ry="8" stroke="url(#accentGrad)" stroke-width="1.5" fill="none" />
+                                            <text x="200" y="155" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="16" font-weight="bold" fill="#f8fafc" letter-spacing="1">BIGQUERY UPDATE</text>
+                                            <text id="x-card-type-text" x="200" y="178" text-anchor="middle" font-family="'Inter', sans-serif" font-size="12" fill="#94a3b8" letter-spacing="3">SYSTEM RELEASE</text>
+                                        </svg>
+                                    </div>
+                                    <div class="x-card-info">
+                                        <span class="x-card-domain">cloud.google.com</span>
+                                        <span class="x-card-title" id="x-card-title">BigQuery Release Notes | Google Cloud</span>
+                                        <span class="x-card-description" id="x-card-description">Stay up to date with the latest features, enhancements, and improvements to Google Cloud's serverless data warehouse.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-tweet-btn">Cancel</button>
+                <button class="btn btn-x" id="send-tweet-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>Post to X</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
